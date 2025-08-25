@@ -89,6 +89,7 @@ Future<void> showTodayExpenses(String userId) async {
   }
 }
 
+
 Future<void> searchExpense(String userId) async {
  print("\n======== Search expense ========");
  stdout.write("Item to search: ");
@@ -113,5 +114,90 @@ Future<void> searchExpense(String userId) async {
    }
  } else {
    print('Connection error! Status code: ${response.statusCode}');
+ }
+}
+   
+Future<String?> login() async {
+  print("===== Login =====");
+  stdout.write("Username: ");
+  String? username = stdin.readLineSync()?.trim();
+  stdout.write("Password: ");
+  String? password = stdin.readLineSync()?.trim();
+  if (username == null || password == null) {
+    print("Incomplete input");
+    return null;
+  }
+
+  final body = {"username": username, "password": password};
+  final url = Uri.parse('http://localhost:3000/login');
+  final response = await http.post(url, body: body);
+
+  if (response.statusCode == 200) {
+    final result = jsonDecode(response.body);
+    print("Login successful.");
+    return result['id']?.toString();
+  } else if (response.statusCode == 401 || response.statusCode == 500) {
+    final result = jsonDecode(response.body);
+    print(result);
+    return null;
+  } else {
+    print("Unknown error");
+    return null;
+  }
+}
+
+Future<void> addNewExpense(String userId) async {
+  print("\n======== Add new item ========");
+  stdout.write("Item: ");
+  String? item = stdin.readLineSync()?.trim();
+  stdout.write("Paid: ");
+  String? paidStr = stdin.readLineSync()?.trim();
+  if (item == null || paidStr == null) {
+    print("Incomplete input");
+    return;
+  }
+  try {
+    int paid = int.parse(paidStr);
+    final url = Uri.parse('http://localhost:3000/expenses');
+    final body = {"userId": userId, "item": item, "paid": paid};
+    final response = await http.post(
+      url,
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode(body),
+    );
+
+    if (response.statusCode == 201) {
+      print("Inserted!");
+    } else {
+      print('Connection error! Status code: ${response.statusCode}');
+    }
+  } catch (e) {
+    print("Invalid paid amount. Please enter a number.");
+  }
+}
+
+Future<void> deleteExpense(String userId) async {
+ print("\n======== Delete an item ========");
+ stdout.write("Item id: ");
+ String? idStr = stdin.readLineSync()?.trim();
+ if (idStr == null) {
+   print("Incomplete input");
+   return;
+ }
+  try {
+   int id = int.parse(idStr);
+   final url = Uri.parse('http://localhost:3000/expenses/$id?userId=$userId');
+   final response = await http.delete(url);
+
+
+   if (response.statusCode == 200) {
+     print("Deleted!");
+   } else if (response.statusCode == 404) {
+     print("Expense not found or does not belong to this user.");
+   } else {
+     print('Connection error! Status code: ${response.statusCode}');
+   }
+ } catch (e) {
+   print("Invalid item ID. Please enter a number.");
  }
 }
