@@ -88,3 +88,30 @@ Future<void> showTodayExpenses(String userId) async {
     print('Connection error! Status code: ${response.statusCode}');
   }
 }
+
+Future<void> searchExpense(String userId) async {
+ print("\n======== Search expense ========");
+ stdout.write("Item to search: ");
+ String? keyword = stdin.readLineSync()?.trim();
+ if (keyword == null || keyword.isEmpty) {
+   print("No keyword entered.");
+   return;
+ }
+  final url = Uri.parse('http://localhost:3000/expenses?userId=$userId&keyword=$keyword');
+ http.Response response = await http.get(url);
+
+
+ if (response.statusCode == 200) {
+   final result = jsonDecode(response.body) as List;
+   if (result.isEmpty) {
+     print("No item: $keyword");
+   } else {
+     print("\n--------- Search results ---------");
+     for (Map exp in result) {
+       print('id: ${exp["id"]}, item: ${exp["item"]} , paid: ${exp["paid"]} , date: ${exp["date"]}');
+     }
+   }
+ } else {
+   print('Connection error! Status code: ${response.statusCode}');
+ }
+}
