@@ -88,3 +88,35 @@ Future<void> showTodayExpenses(String userId) async {
     print('Connection error! Status code: ${response.statusCode}');
   }
 }
+
+
+Future<String?> login() async {
+ print("===== Login =====");
+ stdout.write("Username: ");
+ String? username = stdin.readLineSync()?.trim();
+ stdout.write("Password: ");
+ String? password = stdin.readLineSync()?.trim();
+ if (username == null || password == null) {
+   print("Incomplete input");
+   return null;
+ }
+
+
+ final body = {"username": username, "password": password};
+ final url = Uri.parse('http://localhost:3000/login');
+ final response = await http.post(url, body: body);
+
+
+ if (response.statusCode == 200) {
+   final result = jsonDecode(response.body);
+   print("Login successful.");
+   return result['id']?.toString();
+ } else if (response.statusCode == 401 || response.statusCode == 500) {
+   final result = jsonDecode(response.body);
+   print(result);
+   return null;
+ } else {
+   print("Unknown error");
+   return null;
+ }
+}
