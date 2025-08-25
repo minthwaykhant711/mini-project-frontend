@@ -1,4 +1,3 @@
-
 import 'package:http/http.dart' as http;
 import 'dart:io';
 import 'dart:convert';
@@ -90,64 +89,61 @@ Future<void> showTodayExpenses(String userId) async {
   }
 }
 
-
-
 Future<String?> login() async {
- print("===== Login =====");
- stdout.write("Username: ");
- String? username = stdin.readLineSync()?.trim();
- stdout.write("Password: ");
- String? password = stdin.readLineSync()?.trim();
- if (username == null || password == null) {
-   print("Incomplete input");
-   return null;
- }
+  print("===== Login =====");
+  stdout.write("Username: ");
+  String? username = stdin.readLineSync()?.trim();
+  stdout.write("Password: ");
+  String? password = stdin.readLineSync()?.trim();
+  if (username == null || password == null) {
+    print("Incomplete input");
+    return null;
+  }
 
+  final body = {"username": username, "password": password};
+  final url = Uri.parse('http://localhost:3000/login');
+  final response = await http.post(url, body: body);
 
- final body = {"username": username, "password": password};
- final url = Uri.parse('http://localhost:3000/login');
- final response = await http.post(url, body: body);
+  if (response.statusCode == 200) {
+    final result = jsonDecode(response.body);
+    print("Login successful.");
+    return result['id']?.toString();
+  } else if (response.statusCode == 401 || response.statusCode == 500) {
+    final result = jsonDecode(response.body);
+    print(result);
+    return null;
+  } else {
+    print("Unknown error");
+    return null;
+  }
+}
 
-
- if (response.statusCode == 200) {
-   final result = jsonDecode(response.body);
-   print("Login successful.");
-   return result['id']?.toString();
- } else if (response.statusCode == 401 || response.statusCode == 500) {
-   final result = jsonDecode(response.body);
-   print(result);
-   return null;
- } else {
-   print("Unknown error");
-   return null;
-   
 Future<void> addNewExpense(String userId) async {
- print("\n======== Add new item ========");
- stdout.write("Item: ");
- String? item = stdin.readLineSync()?.trim();
- stdout.write("Paid: ");
- String? paidStr = stdin.readLineSync()?.trim();
+  print("\n======== Add new item ========");
+  stdout.write("Item: ");
+  String? item = stdin.readLineSync()?.trim();
+  stdout.write("Paid: ");
+  String? paidStr = stdin.readLineSync()?.trim();
   if (item == null || paidStr == null) {
-   print("Incomplete input");
-   return;
- }
+    print("Incomplete input");
+    return;
+  }
   try {
-   int paid = int.parse(paidStr);
-   final url = Uri.parse('http://localhost:3000/expenses');
-   final body = {
-     "userId": userId,
-     "item": item,
-     "paid": paid,
-   };
-   final response = await http.post(url, headers: {"Content-Type": "application/json"}, body: jsonEncode(body));
+    int paid = int.parse(paidStr);
+    final url = Uri.parse('http://localhost:3000/expenses');
+    final body = {"userId": userId, "item": item, "paid": paid};
+    final response = await http.post(
+      url,
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode(body),
+    );
 
-
-   if (response.statusCode == 201) {
-     print("Inserted!");
-   } else {
-     print('Connection error! Status code: ${response.statusCode}');
-   }
- } catch (e) {
-   print("Invalid paid amount. Please enter a number.");
- }
+    if (response.statusCode == 201) {
+      print("Inserted!");
+    } else {
+      print('Connection error! Status code: ${response.statusCode}');
+    }
+  } catch (e) {
+    print("Invalid paid amount. Please enter a number.");
+  }
 }
