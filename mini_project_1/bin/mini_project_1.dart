@@ -37,3 +37,29 @@ Future<void> addNewExpense(String userId) async {
    print("Invalid paid amount. Please enter a number.");
  }
 }
+
+Future<void> deleteExpense(String userId) async {
+ print("\n======== Delete an item ========");
+ stdout.write("Item id: ");
+ String? idStr = stdin.readLineSync()?.trim();
+ if (idStr == null) {
+   print("Incomplete input");
+   return;
+ }
+  try {
+   int id = int.parse(idStr);
+   final url = Uri.parse('http://localhost:3000/expenses/$id?userId=$userId');
+   final response = await http.delete(url);
+
+
+   if (response.statusCode == 200) {
+     print("Deleted!");
+   } else if (response.statusCode == 404) {
+     print("Expense not found or does not belong to this user.");
+   } else {
+     print('Connection error! Status code: ${response.statusCode}');
+   }
+ } catch (e) {
+   print("Invalid item ID. Please enter a number.");
+ }
+}
