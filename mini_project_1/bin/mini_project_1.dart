@@ -3,18 +3,21 @@ import 'dart:io';
 import 'dart:convert';
 
 void main() async {
-  String? userId = await login();
+  final loginResult = await login();
 
-  if (userId != null) {
-    await showExpensesMenu(userId);
+  if (loginResult != null) {
+    String userId = loginResult['id'] ?? '';
+    String username = loginResult['username'] ?? '';
+    await showExpensesMenu(userId, username);
   }
 
   print("Bye");
 }
 
-Future<void> showExpensesMenu(String userId) async {
+Future<void> showExpensesMenu(String userId, String username) async {
   while (true) {
     print("\n======== Expense Tracking App ========");
+    print("Welcome $username");
     print("1. Show all");
     print("2. Today's expense");
     print("3. Search expense");
@@ -25,23 +28,22 @@ Future<void> showExpensesMenu(String userId) async {
     String? choice = stdin.readLineSync()?.trim();
 
     if (choice == '1') {
-     await showAllExpenses(userId);
-   } else if (choice == '2') {
-     await showTodayExpenses(userId);
-   } else if (choice == '3') {
-     await searchExpense(userId);
-   } else if (choice == '4') {
-     await addNewExpense(userId);
-   } else if (choice == '5') {
-     await deleteExpense(userId);
-   } else if (choice == '6') {
-     return;
-   } else {
-     print("Invalid choice. Please try again.");
-   }
- }
+      await showAllExpenses(userId);
+    } else if (choice == '2') {
+      await showTodayExpenses(userId);
+    } else if (choice == '3') {
+      await searchExpense(userId);
+    } else if (choice == '4') {
+      await addNewExpense(userId);
+    } else if (choice == '5') {
+      await deleteExpense(userId);
+    } else if (choice == '6') {
+      return;
+    } else {
+      print("Invalid choice. Please try again.");
+    }
+  }
 }
-
 
 Future<void> showAllExpenses(String userId) async {
   final url = Uri.parse('http://localhost:3000/expenses?userId=$userId');
@@ -89,35 +91,37 @@ Future<void> showTodayExpenses(String userId) async {
   }
 }
 
-
 Future<void> searchExpense(String userId) async {
- print("\n======== Search expense ========");
- stdout.write("Item to search: ");
- String? keyword = stdin.readLineSync()?.trim();
- if (keyword == null || keyword.isEmpty) {
-   print("No keyword entered.");
-   return;
- }
-  final url = Uri.parse('http://localhost:3000/expenses?userId=$userId&keyword=$keyword');
- http.Response response = await http.get(url);
+  print("\n======== Search expense ========");
+  stdout.write("Item to search: ");
+  String? keyword = stdin.readLineSync()?.trim();
+  if (keyword == null || keyword.isEmpty) {
+    print("No keyword entered.");
+    return;
+  }
+  final url = Uri.parse(
+    'http://localhost:3000/expenses?userId=$userId&keyword=$keyword',
+  );
+  http.Response response = await http.get(url);
 
-
- if (response.statusCode == 200) {
-   final result = jsonDecode(response.body) as List;
-   if (result.isEmpty) {
-     print("No item: $keyword");
-   } else {
-     print("\n--------- Search results ---------");
-     for (Map exp in result) {
-       print('id: ${exp["id"]}, item: ${exp["item"]} , paid: ${exp["paid"]} , date: ${exp["date"]}');
-     }
-   }
- } else {
-   print('Connection error! Status code: ${response.statusCode}');
- }
+  if (response.statusCode == 200) {
+    final result = jsonDecode(response.body) as List;
+    if (result.isEmpty) {
+      print("No item: $keyword");
+    } else {
+      print("\n--------- Search results ---------");
+      for (Map exp in result) {
+        print(
+          'id: ${exp["id"]}, item: ${exp["item"]} , paid: ${exp["paid"]} , date: ${exp["date"]}',
+        );
+      }
+    }
+  } else {
+    print('Connection error! Status code: ${response.statusCode}');
+  }
 }
-   
-Future<String?> login() async {
+
+Future<Map<String, String>?> login() async {
   print("===== Login =====");
   stdout.write("Username: ");
   String? username = stdin.readLineSync()?.trim();
@@ -130,13 +134,16 @@ Future<String?> login() async {
 
   final body = {"username": username, "password": password};
   final url = Uri.parse('http://localhost:3000/login');
-  final response = await http.post(url, body: body);
+  final response = await http.post(
+    url,
+    headers: {"Content-Type": "application/json"},
+    body: jsonEncode(body),
+  );
 
   if (response.statusCode == 200) {
     final result = jsonDecode(response.body);
     print("Login successful.");
-    print("Welcome $username");
-    return result['id']?.toString();
+    return {'id': result['id']?.toString() ?? '', 'username': username};
   } else if (response.statusCode == 401 || response.statusCode == 500) {
     final result = jsonDecode(response.body);
     print(result);
@@ -178,27 +185,26 @@ Future<void> addNewExpense(String userId) async {
 }
 
 Future<void> deleteExpense(String userId) async {
- print("\n======== Delete an item ========");
- stdout.write("Item id: ");
- String? idStr = stdin.readLineSync()?.trim();
- if (idStr == null) {
-   print("Incomplete input");
-   return;
- }
+  print("\n======== Delete an item ========");
+  stdout.write("Item id: ");
+  String? idStr = stdin.readLineSync()?.trim();
+  if (idStr == null) {
+    print("Incomplete input");
+    return;
+  }
   try {
-   int id = int.parse(idStr);
-   final url = Uri.parse('http://localhost:3000/expenses/$id?userId=$userId');
-   final response = await http.delete(url);
+    int id = int.parse(idStr);
+    final url = Uri.parse('http://localhost:3000/expenses/$id?userId=$userId');
+    final response = await http.delete(url);
 
-
-   if (response.statusCode == 200) {
-     print("Deleted!");
-   } else if (response.statusCode == 404) {
-     print("Expense not found or does not belong to this user.");
-   } else {
-     print('Connection error! Status code: ${response.statusCode}');
-   }
- } catch (e) {
-   print("Invalid item ID. Please enter a number.");
- }
+    if (response.statusCode == 200) {
+      print("Deleted!");
+    } else if (response.statusCode == 404) {
+      print("Expense not found or does not belong to this user.");
+    } else {
+      print('Connection error! Status code: ${response.statusCode}');
+    }
+  } catch (e) {
+    print("Invalid item ID. Please enter a number.");
+  }
 }
