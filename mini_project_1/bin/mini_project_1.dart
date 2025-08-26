@@ -135,6 +135,7 @@ Future<String?> login() async {
   if (response.statusCode == 200) {
     final result = jsonDecode(response.body);
     print("Login successful.");
+    print("Welcome $username");
     return result['id']?.toString();
   } else if (response.statusCode == 401 || response.statusCode == 500) {
     final result = jsonDecode(response.body);
