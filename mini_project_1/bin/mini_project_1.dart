@@ -25,23 +25,23 @@ Future<void> showExpensesMenu(String userId) async {
     String? choice = stdin.readLineSync()?.trim();
 
     if (choice == '1') {
-      // Placeholder for showAllExpenses(userId);
-      print("Show all expenses (to be implemented)");
-    } else if (choice == '2') {
-      print("Show today's expenses (to be implemented)");
-    } else if (choice == '3') {
-      print("Search expense (to be implemented)");
-    } else if (choice == '4') {
-      print("Add new expense (to be implemented)");
-    } else if (choice == '5') {
-      print("Delete expense (to be implemented)");
-    } else if (choice == '6') {
-      return;
-    } else {
-      print("Invalid choice. Please try again.");
-    }
-  }
+     await showAllExpenses(userId);
+   } else if (choice == '2') {
+     await showTodayExpenses(userId);
+   } else if (choice == '3') {
+     await searchExpense(userId);
+   } else if (choice == '4') {
+     await addNewExpense(userId);
+   } else if (choice == '5') {
+     await deleteExpense(userId);
+   } else if (choice == '6') {
+     return;
+   } else {
+     print("Invalid choice. Please try again.");
+   }
+ }
 }
+
 
 Future<void> showAllExpenses(String userId) async {
   final url = Uri.parse('http://localhost:3000/expenses?userId=$userId');
