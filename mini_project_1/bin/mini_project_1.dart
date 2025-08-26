@@ -3,7 +3,7 @@ import 'dart:io';
 import 'dart:convert';
 
 void main() async {
-  String? userId = "test_user";
+  String? userId = await login();
 
   if (userId != null) {
     await showExpensesMenu(userId);
